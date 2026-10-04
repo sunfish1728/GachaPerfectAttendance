@@ -340,3 +340,37 @@ def test_validation(fake, change):
     with pytest.raises(AdapterError):
         OneDragonAdapter().run(ctx, {**params, **change})
     assert commands == []
+
+
+def _window_lost_program(script):
+    """第一次執行模擬一條龍抓到失效視窗而失敗（之後不退出），第二次成功。"""
+    script.write_text(
+        "import pathlib,time\n"
+        "root=pathlib.Path(__file__).parent\n"
+        "n=root/'runs.txt'\n"
+        "k=int(n.read_text()) if n.exists() else 0\n"
+        "n.write_text(str(k+1))\n"
+        "time.sleep(0.12)\n"
+        "p=root/'.log/log.txt'\n"
+        "with p.open('a',encoding='utf-8') as f:\n"
+        f"    f.write(('RuntimeError: 游戏窗口未就绪\\n'+{FAILURE!r}+'\\n') if k==0 else {SUCCESS!r}+'\\n')\n"
+        "time.sleep(60 if k==0 else 0)\n", encoding="utf-8")
+
+
+def test_relaunch_once_when_game_window_lost(fake, monkeypatch):
+    root, script, ctx, params, procs, commands, messages = fake
+    monkeypatch.setattr(onedragon, "RELAUNCH_DELAY", 0.05)
+    _window_lost_program(script)
+    assert "成功" in OneDragonAdapter().run(ctx, params)
+    assert (root / "runs.txt").read_text() == "2"
+    assert any("重新啟動一條龍" in m for m in messages)
+    assert all(p.poll() is not None for p in procs)
+
+
+def test_window_lost_relaunch_is_limited(fake, monkeypatch):
+    root, script, ctx, params, *_ = fake
+    monkeypatch.setattr(onedragon, "RELAUNCH_DELAY", 0.05)
+    _window_lost_program(script)
+    with pytest.raises(AdapterError, match="失敗關鍵字"):
+        OneDragonAdapter().run(ctx, {**params, "window_retries": 0})
+    assert (root / "runs.txt").read_text() == "1"

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-10-04",
+  "updated": "2026-10-05",
   "adapters": [
     {
       "id": "ok-nte",
@@ -14,9 +14,9 @@
     {
       "id": "zzz-onedragon",
       "name": "絕區零一條龍",
-      "version": 1,
+      "version": 2,
       "file": "zzz-onedragon.yaml",
-      "sha256": "2a3b0044f06dbcdd799d5979923bca6a206ee4122e9d704630a532739ea0e7a2",
+      "sha256": "fb8a61f5caa325d937fa7a02bfdb25ccac0abfd5b34f2ccaa8470a9651ffc326",
       "min_app": "",
       "note": "已驗證 2.0.0"
     }

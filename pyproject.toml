@@ -1,6 +1,6 @@
 [project]
 name = "gachahub"
-version = "0.1.1"
+version = "0.1.2"
 description = "二遊全勤君：集合、排程並執行各類二游自動化腳本"
 requires-python = ">=3.12"
 dependencies = [

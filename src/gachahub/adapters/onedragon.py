@@ -28,12 +28,16 @@ import yaml
 from ..core import process
 from ..core.adapter import Adapter, AdapterError, TaskOption
 from ..core.context import RunContext, capture_if_failing
+from ..core.foreground import ForegroundKeeper, allow_foreground
 from ..core.watchdog import StallWatch
 
 SUCCESS = "指令[ 一条龙 ] 执行成功"
 FAILURE = "指令[ 一条龙 ] 执行失败"
 FINISH_WAIT = 60.0
+# 一條龍快取了已失效的遊戲視窗句柄（常見於遊戲冷啟動），重啟一條龍即可恢復
+WINDOW_LOST = ("游戏窗口未就绪", "切换到游戏窗口失败")
 POLL_INTERVAL = 0.25
+RELAUNCH_DELAY = 5.0
 
 
 class _LogTail:
@@ -260,54 +264,69 @@ class OneDragonAdapter(Adapter):
             log_path = Path(p.get("log_file") or root / ".log/log.txt")
             if not log_path.is_absolute():
                 log_path = root / log_path
-            tail = _LogTail(log_path)
-            cmd = self.build_command({**p, "install_dir": str(root)})
-            ctx.check()
-            ctx.log(f"啟動一條龍：{' '.join(cmd)}")
-            try:
-                launched.append(process.launch(cmd, cwd=root, hide_window=True))
-            except OSError as exc:
-                raise AdapterError(f"一條龍啟動失敗：{exc}") from exc
-            grace_end = time.monotonic() + float(p.get("startup_grace", 90))
-            watch = StallWatch([root / ".log"], p.get("stall_minutes", 20))
-            seen = False
-            seen_worker = False
-            success_at = None
+            relaunches = int(p.get("window_retries", 1))
             while True:
+                tail = _LogTail(log_path)
+                cmd = self.build_command({**p, "install_dir": str(root)})
                 ctx.check()
-                alive = active()
-                seen = seen or bool(alive)
-                for item in alive:
-                    try:
-                        if Path(item.exe()).resolve() != Path(cmd[0]).resolve():
-                            seen_worker = True
-                    except (psutil.NoSuchProcess, psutil.AccessDenied, OSError):
-                        pass
-                content = tail.read()
-                for keyword in p.get("fail_keywords", [FAILURE]):
-                    if keyword in content:
-                        raise AdapterError(f"一條龍日誌出現失敗關鍵字：{keyword}")
-                if success_at is None and any(k in content for k in p.get("success_keywords", [SUCCESS])):
-                    success_at = time.monotonic()
-                    ctx.log("一條龍執行成功，等待程序結束")
-                if success_at is not None:
-                    if not alive:
-                        return "一條龍執行成功"
-                    if time.monotonic() - success_at >= FINISH_WAIT:
-                        ctx.log("成功後程序仍未退出，清理本次程序")
+                ctx.log(f"啟動一條龍：{' '.join(cmd)}")
+                allow_foreground()
+                try:
+                    launched.append(process.launch(cmd, cwd=root, hide_window=True))
+                except OSError as exc:
+                    raise AdapterError(f"一條龍啟動失敗：{exc}") from exc
+                grace_end = time.monotonic() + float(p.get("startup_grace", 90))
+                watch = StallWatch([root / ".log"], p.get("stall_minutes", 20))
+                keeper = ForegroundKeeper(list(p.get("game_processes") or []), on_log=ctx.log)
+                seen = False
+                seen_worker = False
+                window_lost = False
+                success_at = None
+                while True:
+                    ctx.check()
+                    keeper.tick()
+                    alive = active()
+                    seen = seen or bool(alive)
+                    for item in alive:
+                        try:
+                            if Path(item.exe()).resolve() != Path(cmd[0]).resolve():
+                                seen_worker = True
+                        except (psutil.NoSuchProcess, psutil.AccessDenied, OSError):
+                            pass
+                    content = tail.read()
+                    window_lost = window_lost or any(m in content for m in WINDOW_LOST)
+                    failed = next((k for k in p.get("fail_keywords", [FAILURE]) if k in content), None)
+                    if failed and window_lost and relaunches > 0:
+                        relaunches -= 1
+                        ctx.log("一條龍抓到失效的遊戲視窗（遊戲冷啟動時偶發），重新啟動一條龍")
                         stop()
-                        return "一條龍執行成功（已清理程序）"
-                elif not alive:
-                    # 提權啟動器會先退出，再由另一個程序接手；寬限期內允許空窗。
-                    if seen_worker or (seen and time.monotonic() >= grace_end):
-                        raise AdapterError("一條龍程序已結束，但未讀到成功關鍵字")
-                    if time.monotonic() >= grace_end:
-                        raise AdapterError("寬限期內未看到一條龍程序，請檢查 UAC 提示與管理員權限")
-                idle = watch.check()
-                if (success_at is None and time.monotonic() >= grace_end
-                        and idle is not None and idle >= watch.stall_minutes * 60):
-                    raise AdapterError(f"卡死：日誌已 {idle / 60:.1f} 分鐘沒有更新")
-                ctx.sleep(POLL_INTERVAL)
+                        launched.clear()
+                        tracked.clear()
+                        ctx.sleep(RELAUNCH_DELAY)
+                        break
+                    if failed:
+                        raise AdapterError(f"一條龍日誌出現失敗關鍵字：{failed}")
+                    if success_at is None and any(k in content for k in p.get("success_keywords", [SUCCESS])):
+                        success_at = time.monotonic()
+                        ctx.log("一條龍執行成功，等待程序結束")
+                    if success_at is not None:
+                        if not alive:
+                            return "一條龍執行成功"
+                        if time.monotonic() - success_at >= FINISH_WAIT:
+                            ctx.log("成功後程序仍未退出，清理本次程序")
+                            stop()
+                            return "一條龍執行成功（已清理程序）"
+                    elif not alive:
+                        # 提權啟動器會先退出，再由另一個程序接手；寬限期內允許空窗。
+                        if seen_worker or (seen and time.monotonic() >= grace_end):
+                            raise AdapterError("一條龍程序已結束，但未讀到成功關鍵字")
+                        if time.monotonic() >= grace_end:
+                            raise AdapterError("寬限期內未看到一條龍程序，請檢查 UAC 提示與管理員權限")
+                    idle = watch.check()
+                    if (success_at is None and time.monotonic() >= grace_end
+                            and idle is not None and idle >= watch.stall_minutes * 60):
+                        raise AdapterError(f"卡死：日誌已 {idle / 60:.1f} 分鐘沒有更新")
+                    ctx.sleep(POLL_INTERVAL)
         finally:
             capture_if_failing(ctx)
             try:

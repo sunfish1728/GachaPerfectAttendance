@@ -1,7 +1,7 @@
 id: zzz-onedragon
 name: 絕區零一條龍
 base: onedragon
-version: 1
+version: 2
 compat:
   min: "2.0.0"
   max: "2.0"
@@ -9,6 +9,8 @@ compat:
   note: 已驗證 2.0.0
 defaults:
   launcher: OneDragon-Launcher.exe
+  # 遊戲視窗出現後由本程式帶到前景，避免一條龍切換視窗被 Windows 前景鎖定擋下
+  game_processes: [ZenlessZoneZero.exe]
 fields:
   - key: stall_minutes
     label: 日誌卡死分鐘數
