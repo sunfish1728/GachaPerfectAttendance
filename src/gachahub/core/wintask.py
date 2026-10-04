@@ -61,7 +61,7 @@ def build_xml(schedule, python_exe: str, workdir: str, lead_minutes: int = 3, hi
 
     root = ET.Element("Task", {"version": "1.2", "xmlns": _NS})
     info = add(root, "RegistrationInfo")
-    add(info, "Description", f"由二游腳本集合站建立：{schedule.chain}；提前喚醒並啟動常駐程式。")
+    add(info, "Description", f"由二遊全勤君建立：{schedule.chain}；提前喚醒並啟動常駐程式。")
     triggers = add(root, "Triggers")
     calendar = schedule.kind in (ScheduleKind.DAILY, ScheduleKind.WEEKLY)
     trigger = add(triggers, "CalendarTrigger" if calendar else "TimeTrigger")
@@ -124,7 +124,7 @@ def _run(args):
 
 def register(schedule, python_exe, workdir, lead_minutes=3, highest=True) -> tuple[bool, str]:
     if highest and not is_admin():
-        return False, "建立最高權限喚醒工作需要管理員權限，請以管理員身分重新啟動二游腳本集合站。"
+        return False, "建立最高權限喚醒工作需要管理員權限，請以管理員身分重新啟動二遊全勤君。"
     path = None
     try:
         xml = build_xml(schedule, python_exe, workdir, lead_minutes, highest)

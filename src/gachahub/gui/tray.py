@@ -21,13 +21,13 @@ class Tray(QSystemTrayIcon):
         super().__init__(icon, parent)
         self.controller = controller
         self.scheduler = None  # 由主視窗設定
-        self.setToolTip("二游腳本集合站 — 待命中")
+        self.setToolTip("二遊全勤君 — 待命中")
         self.menu = SystemTrayMenu(parent=parent)
         self.setContextMenu(self.menu)
         self.menu.aboutToShow.connect(self._rebuild)
         self._rebuild()
         self.activated.connect(self._on_activated)
-        controller.runStarted.connect(lambda n: self.setToolTip(f"二游腳本集合站 — 執行中：{n}"))
+        controller.runStarted.connect(lambda n: self.setToolTip(f"二遊全勤君 — 執行中：{n}"))
         controller.runEvent.connect(self._on_event)
         controller.runFinished.connect(self._on_finished)
 
@@ -64,10 +64,10 @@ class Tray(QSystemTrayIcon):
 
     def _on_event(self, kind: str, data: dict) -> None:
         if kind == "step_start" and self.controller.current_chain:
-            self.setToolTip(f"二游腳本集合站 — {self.controller.current_chain}\n第 {data['index'] + 1} 步：{data['name']}")
+            self.setToolTip(f"二遊全勤君 — {self.controller.current_chain}\n第 {data['index'] + 1} 步：{data['name']}")
 
     def _on_finished(self, report) -> None:
-        self.setToolTip("二游腳本集合站 — 待命中")
+        self.setToolTip("二遊全勤君 — 待命中")
         if report is None:
             self.showMessage("任務鏈出錯", "詳見執行頁日誌", QSystemTrayIcon.MessageIcon.Critical)
         elif report.cancelled:

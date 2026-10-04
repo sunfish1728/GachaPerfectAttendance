@@ -78,7 +78,7 @@ class MainWindow(FluentWindow):
         self.instance_key = ""
         self.app_icon = make_app_icon()
         self.setWindowIcon(self.app_icon)
-        self.setWindowTitle("二游腳本集合站")
+        self.setWindowTitle("二遊全勤君")
         self.resize(1080, 720)
         self.setMinimumSize(860, 600)
 

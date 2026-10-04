@@ -35,7 +35,7 @@ def test_xml(kind):
         "ExecutionTimeLimit": "PT0S", "MultipleInstancesPolicy": "IgnoreNew",
     }.items():
         assert value(f"t:Settings/t:{key}") == expected
-    assert "二游腳本集合站" in value("t:RegistrationInfo/t:Description")
+    assert "二遊全勤君" in value("t:RegistrationInfo/t:Description")
     assert value("t:Actions/t:Exec/t:Command").endswith("pythonw.exe")
     assert value("t:Actions/t:Exec/t:Arguments") == "-m gachahub --minimized --from-task"
     assert value("t:Actions/t:Exec/t:WorkingDirectory") == r"C:\專案 空白"

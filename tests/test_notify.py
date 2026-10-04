@@ -68,9 +68,9 @@ def requests(monkeypatch):
     ("serverchan", {"sendkey": "sctp123tsecret"}, "https://123.push.ft07.com/send/sctp123tsecret.send",
      {"title": ["標題"], "desp": ["內容"]}),
     ("bark", {"device_key": "secret"}, "https://api.day.app/push",
-     {"title": "標題", "body": "內容", "device_key": "secret", "group": "二游腳本集合站"}),
+     {"title": "標題", "body": "內容", "device_key": "secret", "group": "二遊全勤君"}),
     ("bark", {"device_key": "secret", "server": "https://bark.example/"}, "https://bark.example/push",
-     {"title": "標題", "body": "內容", "device_key": "secret", "group": "二游腳本集合站"}),
+     {"title": "標題", "body": "內容", "device_key": "secret", "group": "二遊全勤君"}),
     ("webhook", {"url": "https://example.com"}, "https://example.com", {"title": "標題", "body": "內容"}),
 ])
 def test_http_requests(requests, kind, params, url, payload):

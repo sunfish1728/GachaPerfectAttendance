@@ -35,7 +35,7 @@ def main() -> int:
 
     QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
     app = QApplication(sys.argv)
-    app.setApplicationName("二游腳本集合站")
+    app.setApplicationName("二遊全勤君")
     app.setQuitOnLastWindowClosed(False)  # 縮到托盤時不結束
     from .gui.i18n import install_translator
 

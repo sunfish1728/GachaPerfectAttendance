@@ -1,6 +1,6 @@
 <p align="center"><img src="assets/icon.png" width="120" alt=""></p>
 
-# 二游腳本集合站
+# 二遊全勤君（GachaPerfectAttendance）
 
 把各家二游自動化腳本集中起來：組成任務鏈、定時自動執行，執行前靜音、結束後還原，跑完推播通知。
 
@@ -12,7 +12,7 @@
 ## 安裝
 
 1. 到 [Releases](https://github.com/sunfish1728/GachaPerfectAttendance/releases/latest) 下載 `install.bat`，放到想安裝的位置（例如 `D:\Games`）。
-2. 雙擊執行，依提示操作。會在旁邊建立 `gachahub` 資料夾並自動下載 Python 與相依套件。
+2. 雙擊執行，依提示操作。會在旁邊建立 `GachaPerfectAttendance` 資料夾並自動下載 Python 與相依套件。
 3. 用資料夾內的 `start.bat` 或桌面捷徑開啟。
 
 - 免安裝式：Python、套件、快取、設定全部放在安裝資料夾內，不寫入系統或登錄檔。
@@ -20,7 +20,7 @@
 - **解除安裝**：從托盤選「離開」後，刪除整個資料夾即可。
 - 需要 Windows 10/11（64 位元）與網路連線。
 
-> OK 系列與一條龍腳本本身需要系統管理員權限，建議在「設定」開啟「啟動時以系統管理員身分執行」。
+> OK 系列與一條龍腳本需要系統管理員權限，所以本程式預設以系統管理員身分啟動（開啟時 Windows 會詢問一次 UAC）。不需要時可在「設定」關閉。
 
 ## 功能
 

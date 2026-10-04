@@ -38,7 +38,7 @@ DEFAULT_ACCENT = "#7A5AF8"
 class AppConfig(QConfig):
     closeToTray = ConfigItem("Window", "CloseToTray", True, BoolValidator())
     trayHintShown = ConfigItem("Window", "TrayHintShown", False, BoolValidator())
-    autoElevate = ConfigItem("General", "AutoElevate", False, BoolValidator())
+    autoElevate = ConfigItem("General", "AutoElevate", True, BoolValidator())
     # 排程與保護
     countdownSeconds = RangeConfigItem("Schedule", "CountdownSeconds", 60, RangeValidator(0, 600))
     presenceEnabled = ConfigItem("Presence", "Enabled", True, BoolValidator())
@@ -174,7 +174,7 @@ class SettingsPage(SmoothScrollArea):
 
         behavior.addSettingCard(SwitchSettingCard(
             FIF.CERTIFICATE, "啟動時以系統管理員身分執行",
-            "OK 系列、一條龍等腳本需要管理員權限；開啟後只在程式啟動時詢問一次 UAC",
+            "OK 系列、一條龍等腳本需要管理員權限（預設開啟）；只在程式啟動時詢問一次 UAC",
             cfg.autoElevate, behavior,
         ))
 

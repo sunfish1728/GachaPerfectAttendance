@@ -1,7 +1,7 @@
 [project]
 name = "gachahub"
-version = "0.1.0"
-description = "二游腳本集合站：集合、排程並執行各類二游自動化腳本"
+version = "0.1.1"
+description = "二遊全勤君：集合、排程並執行各類二游自動化腳本"
 requires-python = ">=3.12"
 dependencies = [
     "PySide6-Fluent-Widgets",

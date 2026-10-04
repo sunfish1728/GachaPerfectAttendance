@@ -259,7 +259,7 @@ def send(channel: Channel, title: str, body: str, timeout: float = 10) -> tuple[
         if channel.type == "bark":
             return _http(params["server"].rstrip("/") + "/push",
                          {"title": title, "body": body, "device_key": params["device_key"],
-                          "group": "二游腳本集合站"}, timeout, channel_type="bark")
+                          "group": "二遊全勤君"}, timeout, channel_type="bark")
         method = params["method"].upper()
         if method not in ("POST", "GET"):
             return False, "Webhook 方法必須是 POST 或 GET"

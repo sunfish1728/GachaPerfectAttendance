@@ -120,7 +120,7 @@ class SetupWizard(MessageBoxBase):
         top.addWidget(IconTile(FIF.GAME, 48, p1))
         top.addSpacing(8)
         tv = QVBoxLayout()
-        tv.addWidget(SubtitleLabel("歡迎使用二游腳本集合站", p1))
+        tv.addWidget(SubtitleLabel("歡迎使用二遊全勤君", p1))
         tv.addWidget(muted_caption("把各家自動化腳本串起來、定時執行，跑完自動還原與通知。", p1))
         top.addLayout(tv, 1)
         v1.addLayout(top)

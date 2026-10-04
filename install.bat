@@ -34,7 +34,7 @@ function Invoke-Native($exe, [string[]]$argv) {
     if ($LASTEXITCODE -ne 0) { Fail "$([IO.Path]::GetFileName($exe)) $($argv -join ' ') 失敗（代碼 $LASTEXITCODE）" }
 }
 
-Write-Host '二游腳本集合站 安裝程式' -ForegroundColor Magenta
+Write-Host '二遊全勤君 安裝程式' -ForegroundColor Magenta
 Write-Host '所有檔案（Python、套件、快取、設定）都放在安裝資料夾內，不寫入系統或登錄檔。'
 
 # ---- 決定安裝位置 ----
@@ -43,18 +43,18 @@ if ($inPlace) {
     $Root = $Here
     Step "在目前資料夾設定執行環境：$Root"
 } else {
-    $Root = Join-Path $Here 'gachahub'
+    $Root = Join-Path $Here 'GachaPerfectAttendance'
     $custom = if ($env:GACHAHUB_INSTALL_DIR) { $env:GACHAHUB_INSTALL_DIR } else { Read-Host "安裝位置（直接按 Enter 使用 $Root）" }
     if (-not [string]::IsNullOrWhiteSpace($custom)) { $Root = $custom.Trim().Trim('"') }
     $Root = [IO.Path]::GetFullPath($Root)
 }
 
-# ---- 正在執行中的集合站必須先關閉 ----
+# ---- 正在執行中的二遊全勤君必須先關閉 ----
 $running = Get-Process -Name pythonw, python -ErrorAction SilentlyContinue |
     Where-Object { $_.Path -and $_.Path.StartsWith($Root, [StringComparison]::OrdinalIgnoreCase) }
 if ($running) {
-    Write-Host "`n偵測到集合站正在執行（PID $($running.Id -join ', ')）。" -ForegroundColor Yellow
-    if (-not (Ask '要結束它並繼續安裝嗎？')) { Fail '請先從托盤選「離開」關閉集合站後再執行安裝。' }
+    Write-Host "`n偵測到二遊全勤君正在執行（PID $($running.Id -join ', ')）。" -ForegroundColor Yellow
+    if (-not (Ask '要結束它並繼續安裝嗎？')) { Fail '請先從托盤選「離開」關閉二遊全勤君後再執行安裝。' }
     $running | Stop-Process -Force
     Start-Sleep -Seconds 1
 }
@@ -147,20 +147,23 @@ $pyw = "$Root\.venv\Scripts\pythonw.exe"
 if (Ask '要在桌面建立捷徑嗎？') {
     $desktop = [Environment]::GetFolderPath('Desktop')
     $ws = New-Object -ComObject WScript.Shell
-    $lnk = $ws.CreateShortcut((Join-Path $desktop '二游腳本集合站.lnk'))
+    $lnkPath = Join-Path $desktop '二遊全勤君.lnk'
+    $lnk = $ws.CreateShortcut($lnkPath)
     $lnk.TargetPath = $pyw
     $lnk.Arguments = '-m gachahub'
     $lnk.WorkingDirectory = $Root
     $lnk.IconLocation = "$Root\assets\icon.ico"
-    $lnk.Description = '二游腳本集合站'
+    $lnk.Description = '二遊全勤君'
     $lnk.Save()
+    # 捷徑設為「以系統管理員身分執行」（腳本需要管理員權限；開啟時由 Windows 詢問一次 UAC）
+    $b = [IO.File]::ReadAllBytes($lnkPath); $b[0x15] = $b[0x15] -bor 0x20; [IO.File]::WriteAllBytes($lnkPath, $b)
     Info '已建立桌面捷徑。'
 }
 
 Write-Host "`n安裝完成！之後用 $Root\start.bat 或桌面捷徑開啟。" -ForegroundColor Green
 Info '更新：重新執行這個安裝檔即可（設定與紀錄會保留）。'
-Info '解除安裝：結束集合站後刪除整個資料夾（與桌面捷徑）即可。'
-if (Ask '現在開啟集合站嗎？') {
+Info '解除安裝：結束二遊全勤君後刪除整個資料夾（與桌面捷徑）即可。'
+if (Ask '現在開啟二遊全勤君嗎？') {
     Start-Process -FilePath "$Root\start.bat" -WorkingDirectory $Root -WindowStyle Hidden
 }
 exit 0

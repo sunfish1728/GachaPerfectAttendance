@@ -288,7 +288,7 @@ class NotifyPage(SmoothScrollArea):
                      parent=self.window(), position=InfoBarPosition.TOP)
 
         def work():
-            ok, msg = send(channel, "🔔 二游腳本集合站 測試通知", "看到這則訊息代表通知設定正確。")
+            ok, msg = send(channel, "🔔 二遊全勤君 測試通知", "看到這則訊息代表通知設定正確。")
             self.bridge.done.emit(channel.name or channel.type, ok, msg)
 
         threading.Thread(target=work, daemon=True).start()

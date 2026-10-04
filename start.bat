@@ -1,5 +1,5 @@
 @echo off
-rem 啟動二游腳本集合站（使用專案內虛擬環境）
+rem 啟動二遊全勤君（使用專案內虛擬環境）
 chcp 65001 >nul
 cd /d "%~dp0"
 set PYTHONPATH=%~dp0src

@@ -322,7 +322,7 @@ class OkScriptAdapter(Adapter):
             try:
                 proc = process.launch(command, cwd=root)
             except OSError as e:
-                raise AdapterError(f"啟動失敗：{e}。請確認 UAC 提示，或以系統管理員執行集合站") from e
+                raise AdapterError(f"啟動失敗：{e}。請確認 UAC 提示，或以系統管理員執行二遊全勤君") from e
             family.add(proc.pid)
             watch = StallWatch([app_dir / "working" / "logs"], p.get("stall_minutes", 20))
             grace_end = time.monotonic() + float(p.get("startup_grace", 60))
@@ -371,7 +371,7 @@ class OkScriptAdapter(Adapter):
                         ctx.log(message)
                         return message
                     if not seen and time.monotonic() >= grace_end:
-                        raise AdapterError("寬限期內未偵測到 OK 程序，可能被 UAC 擋下；請確認提示或以系統管理員執行集合站")
+                        raise AdapterError("寬限期內未偵測到 OK 程序，可能被 UAC 擋下；請確認提示或以系統管理員執行二遊全勤君")
                 else:
                     gone_since = None
                 idle = watch.check()
@@ -404,7 +404,7 @@ class OkScriptAdapter(Adapter):
                 except psutil.NoSuchProcess:
                     pass
                 except (psutil.AccessDenied, OSError) as e:
-                    ctx.log(f"無法關閉 OK 程序，請以系統管理員執行集合站：{e}")
+                    ctx.log(f"無法關閉 OK 程序，請以系統管理員執行二遊全勤君：{e}")
                 for child in tracked:
                     try:
                         if child.is_running():
