@@ -12,13 +12,13 @@
 ## 安裝
 
 1. 到 [Releases](https://github.com/sunfish1728/GachaPerfectAttendance/releases/latest) 下載 `GachaPerfectAttendance-Setup-<版本>.exe`。
-2. 執行安裝程式：選擇安裝位置、勾選是否建立桌面捷徑。安裝時會從 GitHub 下載對應版本的程式與 Python 環境（首次約 300 MB）。
+2. 執行安裝程式：選擇安裝位置、勾選是否建立桌面捷徑。程式與 Python 環境都包在安裝檔內，安裝時不需要網路。
 3. 從「開始」選單或桌面捷徑開啟。
 
-- Python、套件、快取、設定全部放在安裝資料夾內，不使用系統的 Python。
+- 自帶獨立的 Python 3.12，所有檔案與設定都放在安裝資料夾內，不使用也不影響系統的 Python。
 - **更新**：下載新版安裝程式直接執行，會裝到原本的位置；設定、任務鏈與歷史紀錄（`data\`）會保留。
 - **解除安裝**：Windows「設定 → 應用程式」中移除；可選擇是否保留設定與紀錄。
-- 需要 Windows 10/11（64 位元）與網路連線。
+- 需要 Windows 10/11（64 位元）。
 
 > OK 系列與一條龍腳本需要系統管理員權限，所以本程式預設以系統管理員身分啟動（開啟時 Windows 會詢問一次 UAC）。不需要時可在「設定」關閉。
 
@@ -42,7 +42,7 @@
 ```powershell
 . .\scripts\env.ps1            # 所有工具環境限制在專案資料夾內
 powershell -ExecutionPolicy Bypass -File installer\setup-core.ps1 -Root . -Local   # 在原地建立 .local 與 .venv
-.\scripts\build_installer.ps1  # 編譯安裝程式（需 Inno Setup 6 於 .local\innosetup）
+.\scripts\build_installer.ps1  # 建立程式包並編譯離線安裝程式（需 Inno Setup 6 於 .local\innosetup）
 .venv\Scripts\python.exe -m pytest -q
 ```
 

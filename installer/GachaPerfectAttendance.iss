@@ -1,6 +1,6 @@
 ﻿; 二遊全勤君 安裝程式（Inno Setup 6）
-; 編譯：scripts\build_installer.ps1（會自動帶入版本號）
-; 安裝程式本身很小；程式與 Python 環境在安裝時從 GitHub 下載對應版本，全部放在安裝資料夾內。
+; 編譯：scripts\build_installer.ps1（先以 scripts\build_bundle.py 建立 runtime\build\stage，再帶入版本號編譯）
+; 離線安裝：程式、獨立的 Python 3.12 與所有套件都包在安裝檔內，安裝時不需要網路。
 
 #ifndef AppVer
   #define AppVer "0.0.0"
@@ -35,11 +35,10 @@ SetupIconFile=..\assets\icon.ico
 UninstallDisplayIcon={app}\assets\icon.ico
 UninstallDisplayName={#AppName}
 WizardStyle=modern
-Compression=lzma2
+Compression=lzma2/max
 SolidCompression=yes
+LZMANumBlockThreads=4
 CloseApplications=no
-; Inno 預設的 RedirectionGuard 會傳給子程序，導致 uv 安裝 Python 時無法建立目錄連結（os error 448）
-RedirectionGuard=no
 VersionInfoVersion={#AppVer}
 VersionInfoProductName={#AppName}
 VersionInfoDescription={#AppName} 安裝程式
@@ -55,90 +54,32 @@ zh_tw.LaunchApp=啟動二遊全勤君
 [Tasks]
 Name: "desktopicon"; Description: "{cm:DesktopIcon}"; GroupDescription: "{cm:ExtraTasks}"
 
+[InstallDelete]
+; 更新時先清掉舊的程式與執行環境（含 v0.2.0 線上安裝版留下的 .venv、.local 下載快取）；data 與 runtime 保留
+Type: filesandordirs; Name: "{app}\src"
+Type: filesandordirs; Name: "{app}\python"
+Type: filesandordirs; Name: "{app}\.venv"
+Type: filesandordirs; Name: "{app}\.local"
+Type: filesandordirs; Name: "{app}\installer"
+Type: filesandordirs; Name: "{app}\tests"
+Type: filesandordirs; Name: "{app}\scripts"
+Type: filesandordirs; Name: "{app}\docs"
+Type: filesandordirs; Name: "{app}\adapter-repo"
+Type: files; Name: "{app}\pyproject.toml"
+Type: files; Name: "{app}\.gitignore"
+Type: files; Name: "{app}\.gitattributes"
+
 [Files]
-Source: "setup-core.ps1"; DestDir: "{app}\installer"; Flags: ignoreversion
-Source: "..\assets\icon.ico"; DestDir: "{app}\assets"; Flags: ignoreversion
+Source: "..\runtime\build\stage\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{autoprograms}\{#AppName}"; Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: "-m gachahub"; WorkingDir: "{app}"; IconFilename: "{app}\assets\icon.ico"; Comment: "{#AppName}"
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: "-m gachahub"; WorkingDir: "{app}"; IconFilename: "{app}\assets\icon.ico"; Comment: "{#AppName}"; Tasks: desktopicon
+Name: "{autoprograms}\{#AppName}"; Filename: "{app}\python\pythonw.exe"; Parameters: "-m gachahub"; WorkingDir: "{app}"; IconFilename: "{app}\assets\icon.ico"; Comment: "{#AppName}"
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\python\pythonw.exe"; Parameters: "-m gachahub"; WorkingDir: "{app}"; IconFilename: "{app}\assets\icon.ico"; Comment: "{#AppName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: "-m gachahub"; WorkingDir: "{app}"; Description: "{cm:LaunchApp}"; Flags: postinstall nowait skipifsilent; Check: CoreSucceeded
+Filename: "{app}\python\pythonw.exe"; Parameters: "-m gachahub"; WorkingDir: "{app}"; Description: "{cm:LaunchApp}"; Flags: postinstall nowait skipifsilent
 
 [Code]
-var
-  CoreExitCode: Integer;
-
-function CoreSucceeded(): Boolean;
-begin
-  Result := CoreExitCode = 0;
-end;
-
-function ReadFirstLine(const FileName: string): string;
-var
-  Lines: TArrayOfString;
-begin
-  Result := '';
-  if LoadStringsFromFile(FileName, Lines) and (GetArrayLength(Lines) > 0) then
-    Result := Lines[0];
-end;
-
-{ 執行 setup-core.ps1：下載程式、建立 Python 環境。期間顯示目前步驟。 }
-procedure RunCore();
-var
-  Page: TOutputMarqueeProgressWizardPage;
-  StatusFile, DoneFile, Params, Line: string;
-  ResultCode, Waited: Integer;
-begin
-  CoreExitCode := -1;
-  ForceDirectories(ExpandConstant('{app}\runtime'));
-  StatusFile := ExpandConstant('{app}\runtime\setup-status.txt');
-  DoneFile := StatusFile + '.done';
-  DeleteFile(DoneFile);
-  DeleteFile(StatusFile);
-  Params := '-NoProfile -ExecutionPolicy Bypass -File "' + ExpandConstant('{app}\installer\setup-core.ps1') +
-    '" -Root "' + ExpandConstant('{app}') + '" -Tag "v{#AppVer}" -StatusFile "' + StatusFile + '"';
-  if not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), Params, ExpandConstant('{app}'),
-              SW_HIDE, ewNoWait, ResultCode) then
-  begin
-    MsgBox('無法啟動 PowerShell：' + SysErrorMessage(ResultCode), mbError, MB_OK);
-    Exit;
-  end;
-  Page := CreateOutputMarqueeProgressPage('正在下載並設定執行環境',
-    '首次安裝需下載 Python 與相依套件（約 300 MB），視網路速度約需數分鐘，請稍候。');
-  Page.Show;
-  try
-    Waited := 0;
-    while not FileExists(DoneFile) do
-    begin
-      Line := ReadFirstLine(StatusFile);
-      if Line <> '' then
-        Page.SetText(Line, '');
-      Page.Animate;
-      Sleep(80);
-      Waited := Waited + 80;
-      if Waited > 60 * 60 * 1000 then
-        Break;  { 最多等 60 分鐘 }
-    end;
-  finally
-    Page.Hide;
-  end;
-  CoreExitCode := StrToIntDef(Trim(ReadFirstLine(DoneFile)), -1);
-  if CoreExitCode <> 0 then
-    MsgBox('執行環境設定失敗：' + ReadFirstLine(StatusFile) + #13#10#13#10 +
-           '請確認網路連線後重新執行安裝程式（設定與紀錄不會遺失）。' + #13#10 +
-           '詳細記錄：' + ExpandConstant('{app}\runtime\setup.log'), mbError, MB_OK);
-end;
-
-procedure CurStepChanged(CurStep: TSetupStep);
-begin
-  if CurStep = ssPostInstall then
-    RunCore();
-end;
-
-{ ---- 解除安裝 ---- }
-
 procedure StopRunningApp();
 var
   ResultCode: Integer;
@@ -148,6 +89,15 @@ begin
     ' Get-Process pythonw,python -ErrorAction SilentlyContinue | Where-Object { $_.Path -and $_.Path.StartsWith($r, ''OrdinalIgnoreCase'') } | Stop-Process -Force"',
     '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  { 更新時程式檔會被覆蓋，先結束這個資料夾裡正在執行的二遊全勤君 }
+  StopRunningApp();
+  Result := '';
+end;
+
+{ ---- 解除安裝 ---- }
 
 function WakeTaskFilter(): string;
 begin

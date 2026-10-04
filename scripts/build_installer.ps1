@@ -1,8 +1,12 @@
-﻿# 編譯安裝程式：. .\scripts\build_installer.ps1 → runtime\installer\GachaPerfectAttendance-Setup-<版本>.exe
-# Inno Setup 6 編譯器放在 .local\innosetup（以免安裝模式解壓，不寫入系統）
+﻿# 編譯離線安裝程式：.\scripts\build_installer.ps1 → runtime\installer\GachaPerfectAttendance-Setup-<版本>.exe
+# 1) scripts\build_bundle.py 建立 runtime\build\stage（獨立 Python＋套件＋程式）
+# 2) Inno Setup 6（放在 .local\innosetup，以免安裝模式解壓，不寫入系統）打包
 $Root = Split-Path -Parent $PSScriptRoot
 $iscc = "$Root\.local\innosetup\ISCC.exe"
 if (-not (Test-Path $iscc)) { throw "找不到 $iscc，請先把 Inno Setup 6 以 /PORTABLE=1 安裝到 .local\innosetup" }
+. "$Root\scripts\env.ps1"
+& "$Root\.venv\Scripts\python.exe" "$Root\scripts\build_bundle.py"
+if ($LASTEXITCODE -ne 0) { throw "建立程式包失敗（$LASTEXITCODE）" }
 $init = Get-Content "$Root\src\gachahub\__init__.py" -Raw -Encoding UTF8
 if ($init -notmatch '__version__ = "([^"]+)"') { throw '讀不到版本號' }
 $ver = $Matches[1]

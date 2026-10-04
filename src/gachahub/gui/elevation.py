@@ -21,7 +21,7 @@ def _pythonw() -> str:
 
 def relaunch_as_admin(extra_args: list[str] | None = None) -> bool:
     """以 UAC 提權啟動新實例。回傳 True 表示已送出（使用者同意），呼叫端應自行結束。
-    注意：提權後的程序不會繼承目前的環境變數，所以套件需以 editable 方式安裝在 .venv 中。"""
+    注意：提權後的程序不會繼承目前的環境變數；安裝版靠 python/Lib/site-packages/gachahub.pth、開發環境靠 editable 安裝找到程式。"""
     args = ["-m", "gachahub", "--elevated", *(extra_args or [])]
     params = " ".join(f'"{a}"' if " " in a else a for a in args)
     root = Path(__file__).resolve().parents[3]
