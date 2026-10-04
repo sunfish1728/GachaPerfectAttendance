@@ -1,0 +1,21 @@
+id: ok-nte
+name: ok 異環
+base: ok
+version: 1
+compat:
+  min: "v1.4.0"
+  max: "v1.4"
+  on_mismatch: warn
+  note: 已驗證 v1.4.6
+defaults:
+  exe: ok-nte.exe
+fields:
+  - key: stall_minutes
+    label: 日誌卡死分鐘數
+    description: 預設 20 分鐘；日誌沒有更新時判定失敗，0 或負數停用，啟動寬限期內不判定。
+  - key: install_dir
+    label: 安裝資料夾
+    description: 選擇包含 ok-nte.exe 的資料夾
+  - key: task
+    label: 任務
+    description: 任務類別名稱，例如 DailyRoutineTask；執行時自動對應目前序號

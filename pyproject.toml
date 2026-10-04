@@ -1,0 +1,30 @@
+[project]
+name = "gachahub"
+version = "0.1.0"
+description = "二游腳本集合站：集合、排程並執行各類二游自動化腳本"
+requires-python = ">=3.12"
+dependencies = [
+    "PySide6-Fluent-Widgets",
+    "psutil",
+    "pycaw",
+    "comtypes",
+    "pyyaml",
+    "pydantic>=2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+gachahub = "gachahub.__main__:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

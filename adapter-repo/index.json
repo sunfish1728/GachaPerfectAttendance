@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "updated": "2026-10-04",
+  "adapters": [
+    {
+      "id": "ok-nte",
+      "name": "ok 異環",
+      "version": 1,
+      "file": "ok-nte.yaml",
+      "sha256": "6d4a55fb82ff89e2a82012c550d9c86eea323b7cb9a3997f610086f8bd3acd7a",
+      "min_app": "",
+      "note": "已驗證 v1.4.6"
+    },
+    {
+      "id": "zzz-onedragon",
+      "name": "絕區零一條龍",
+      "version": 1,
+      "file": "zzz-onedragon.yaml",
+      "sha256": "2a3b0044f06dbcdd799d5979923bca6a206ee4122e9d704630a532739ea0e7a2",
+      "min_app": "",
+      "note": "已驗證 2.0.0"
+    }
+  ]
+}

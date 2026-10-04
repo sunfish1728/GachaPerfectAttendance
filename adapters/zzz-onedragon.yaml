@@ -1,0 +1,24 @@
+id: zzz-onedragon
+name: 絕區零一條龍
+base: onedragon
+version: 1
+compat:
+  min: "2.0.0"
+  max: "2.0"
+  on_mismatch: warn
+  note: 已驗證 2.0.0
+defaults:
+  launcher: OneDragon-Launcher.exe
+fields:
+  - key: stall_minutes
+    label: 日誌卡死分鐘數
+    description: 預設 20 分鐘；.log 資料夾沒有更新時判定失敗，0 或負數停用，啟動寬限期內不判定。
+  - key: install_dir
+    label: 一條龍安裝資料夾
+    description: 含 OneDragon-Launcher.exe 的資料夾，必填。
+  - key: instance
+    label: 帳號實例
+    description: 空白使用全部／預設實例；多個帳號以英文逗號分隔，例如 1,2。
+  - key: pre_command
+    label: 前置命令
+    description: 字串列表，第一項為執行檔，其餘為參數；等待完成後啟動，失敗只記錄警告。預設逾時 300 秒，可用 pre_timeout 調整。
