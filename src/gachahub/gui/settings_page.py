@@ -51,8 +51,8 @@ class AppConfig(QConfig):
     # 首次使用與更新
     wizardDone = ConfigItem("General", "WizardDone", False, BoolValidator())
     adapterRepoUrl = ConfigItem(
-        "Update", "AdapterRepoUrl", "https://raw.githubusercontent.com/sunfish1728/gachahub/main/adapter-repo/index.json")
-    appRepo = ConfigItem("Update", "AppRepo", "sunfish1728/gachahub")
+        "Update", "AdapterRepoUrl", "https://raw.githubusercontent.com/sunfish1728/GachaPerfectAttendance/main/adapter-repo/index.json")
+    appRepo = ConfigItem("Update", "AppRepo", "sunfish1728/GachaPerfectAttendance")
     autoCheckUpdate = ConfigItem("Update", "AutoCheck", True, BoolValidator())
 
 

@@ -15,7 +15,7 @@ $ProgressPreference = 'SilentlyContinue'
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
-$Repo = 'sunfish1728/gachahub'
+$Repo = 'sunfish1728/GachaPerfectAttendance'
 $UvUrl = 'https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip'
 $Here = $env:GH_HERE.TrimEnd('\')
 
@@ -140,7 +140,7 @@ Step '安裝相依套件'
 Invoke-Native $Uv @('pip', 'install', '--python', $Py, '-e', $Root)
 
 Step '檢查'
-Invoke-Native $Py @('-c', 'import gachahub, PySide6, qfluentwidgets; print("gachahub", gachahub.__version__)')
+Invoke-Native $Py @('-c', 'import gachahub, PySide6, qfluentwidgets; print(gachahub.__version__)')
 
 # ---- 捷徑（選用） ----
 $pyw = "$Root\.venv\Scripts\pythonw.exe"

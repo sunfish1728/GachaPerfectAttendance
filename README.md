@@ -11,7 +11,7 @@
 
 ## 安裝
 
-1. 到 [Releases](https://github.com/sunfish1728/gachahub/releases/latest) 下載 `install.bat`，放到想安裝的位置（例如 `D:\Games`）。
+1. 到 [Releases](https://github.com/sunfish1728/GachaPerfectAttendance/releases/latest) 下載 `install.bat`，放到想安裝的位置（例如 `D:\Games`）。
 2. 雙擊執行，依提示操作。會在旁邊建立 `gachahub` 資料夾並自動下載 Python 與相依套件。
 3. 用資料夾內的 `start.bat` 或桌面捷徑開啟。
 
