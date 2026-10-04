@@ -27,6 +27,7 @@ from qfluentwidgets import (
 
 from ..core.models import HookSpec, TaskChain, TaskStep
 from ..core.registry import BUILTIN
+from ..core.runner import format_duration
 from .controller import AppController
 from .step_dialog import StepDialog
 from .widgets import POLICY_TEXT, EmptyState, SectionHeader, muted_caption
@@ -72,7 +73,7 @@ class StepCard(CardWidget):
         title = BodyLabel(step.name, self)
         if not step.enabled:
             title.setTextColor("#8A8A8A", "#7A7A7A")
-        detail = f"{adapter_name}{f'：{task_text}' if task_text else ''} · 逾時 {round(step.timeout / 60)} 分鐘 · {POLICY_TEXT[step.on_fail]}"
+        detail = f"{adapter_name}{f'：{task_text}' if task_text else ''} · 逾時 {round(step.timeout / 60)} 分鐘{f' · 最長 {format_duration(step.max_duration)}' if step.max_duration > 0 else ''} · {POLICY_TEXT[step.on_fail]}"
         if step.on_fail.value == "retry":
             detail += f" {step.retries} 次"
         text.addWidget(title)

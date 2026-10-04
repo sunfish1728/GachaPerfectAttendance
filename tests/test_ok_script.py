@@ -324,3 +324,14 @@ def test_registry_yaml_and_validation(installation):
     for p in ({}, {"install_dir": str(installation)}, params(installation, startup_grace="nan")):
         with pytest.raises(AdapterError):
             adapter.validate(p)
+
+
+def test_max_duration_stops_ok_script(simulation):
+    from gachahub.core.context import DurationReached
+    root, _, under = simulation
+    (root / "mode").write_text("slow", encoding="utf-8")
+    ctx = context(root)
+    ctx.limit_at = time.monotonic() + 1.0
+    with pytest.raises(DurationReached):
+        OkScriptAdapter().run(ctx, params(root, startup_grace=0.2))
+    assert not under(root)

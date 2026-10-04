@@ -179,3 +179,36 @@ def test_adapter_captures_before_killing_process(runner, ctx, tmp_path, monkeypa
     rep = runner.run(TaskChain(name="t", steps=[step]), ctx)
     assert rep.results[0].status == StepStatus.TIMEOUT
     assert order[0] == "capture" and order.count("capture") == 1 and "kill" in order
+
+
+def test_max_duration_kills_and_counts_as_success(runner, ctx, tmp_path):
+    marker = tmp_path / "pid.txt"
+    code = f"import os,time,pathlib; pathlib.Path({str(marker)!r}).write_text(str(os.getpid())); time.sleep(60)"
+    chain = TaskChain(name="t", steps=[
+        py_step("long", code, max_duration=1.5, timeout=1.0, on_fail=FailPolicy.RETRY, retries=3),
+        py_step("next", "pass"),
+    ])
+    start = time.monotonic()
+    rep = runner.run(chain, ctx)
+    elapsed = time.monotonic() - start
+    first = rep.results[0]
+    assert first.status == StepStatus.SUCCESS and "最長運行時間" in first.message
+    assert first.attempts == 1  # 不重試；逾時上限自動放寬，不會先逾時
+    assert rep.results[1].status == StepStatus.SUCCESS
+    assert 1.4 <= elapsed < 15
+    import psutil
+    assert not psutil.pid_exists(int(marker.read_text()))
+    assert ctx.limit_at is None
+
+
+def test_max_duration_zero_means_unlimited(runner, ctx):
+    rep = runner.run(TaskChain(name="t", steps=[py_step("s", "import time; time.sleep(0.3)")]), ctx)
+    assert rep.results[0].status == StepStatus.SUCCESS and "最長" not in rep.results[0].message
+
+
+def test_format_duration():
+    from gachahub.core.runner import format_duration
+    assert format_duration(30) == "30 秒"
+    assert format_duration(90 * 60) == "1 小時 30 分鐘"
+    assert format_duration(120 * 60) == "2 小時"
+    assert format_duration(45 * 60) == "45 分鐘"

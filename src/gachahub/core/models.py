@@ -36,7 +36,8 @@ class TaskStep(BaseModel):
     adapter: str  # 適配器 id，例如 "generic" 或 YAML 宣告的 "ok-nte"
     params: dict[str, Any] = Field(default_factory=dict)
     enabled: bool = True
-    timeout: float = 3600.0  # 秒；任何等待外部程序都必須有上限
+    timeout: float = 3600.0  # 秒；任何等待外部程序都必須有上限，超過算失敗
+    max_duration: float = 0.0  # 秒；最長運行時間，到點直接結束程序並視為完成；0 = 不啟用（預設）
     on_fail: FailPolicy = FailPolicy.SKIP
     retries: int = 1
 

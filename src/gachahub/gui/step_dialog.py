@@ -151,6 +151,25 @@ class StepDialog(MessageBoxBase):
         self.timeoutBox.setValue(max(1, round(step.timeout / 60)))
         form.addRow("逾時上限", self.timeoutBox)
 
+        dur = QWidget(self)
+        dr = QHBoxLayout(dur)
+        dr.setContentsMargins(0, 0, 0, 0)
+        self.durationCheck = CheckBox("啟用", dur)
+        self.durationBox = SpinBox(dur)
+        self.durationBox.setRange(1, 24 * 60)
+        self.durationBox.setSuffix(" 分鐘")
+        self.durationCheck.setChecked(step.max_duration > 0)
+        self.durationBox.setValue(max(1, round(step.max_duration / 60)) if step.max_duration > 0 else 60)
+        self.durationBox.setEnabled(step.max_duration > 0)
+        self.durationCheck.toggled.connect(self.durationBox.setEnabled)
+        dr.addWidget(self.durationCheck)
+        dr.addWidget(self.durationBox, 1)
+        form.addRow("最長運行", dur)
+        durHint = muted_caption("時間到直接結束腳本程序並視為完成，接著跑下一步；預設不啟用。"
+                                "逾時則代表卡住，算失敗（逾時上限會自動放寬到最長運行時間之後）。", self)
+        durHint.setWordWrap(True)
+        form.addRow("", durHint)
+
         pol = QWidget(self)
         pr = QHBoxLayout(pol)
         pr.setContentsMargins(0, 0, 0, 0)
@@ -413,6 +432,7 @@ class StepDialog(MessageBoxBase):
             adapter=adapter_id,
             params=params,
             timeout=self.timeoutBox.value() * 60.0,
+            max_duration=self.durationBox.value() * 60.0 if self.durationCheck.isChecked() else 0.0,
             on_fail=POLICIES[self.policyBox.currentIndex()][0],
             retries=self.retryBox.value(),
             enabled=self._enabled,

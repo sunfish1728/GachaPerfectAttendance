@@ -20,13 +20,17 @@ class StepTimeout(Exception):
     """步驟超過 timeout 時拋出。"""
 
 
+class DurationReached(Exception):
+    """步驟達到設定的最長運行時間（max_duration）時拋出；不算失敗，適配器照常在 finally 關閉程序。"""
+
+
 def capture_if_failing(ctx: "RunContext") -> None:
     """在適配器的 finally（關閉腳本程序之前）呼叫：若正因失敗／逾時／卡死離開，先保存現場截圖。
     使用者取消不截圖。"""
     import sys
 
     exc = sys.exc_info()[1]
-    if exc is not None and not isinstance(exc, Cancelled):
+    if exc is not None and not isinstance(exc, (Cancelled, DurationReached)):
         ctx.capture_failure()
 
 
@@ -39,6 +43,7 @@ class RunContext:
     # / ("step_end", {"index": i, "result": StepResult})；於工作執行緒呼叫
     on_event: Callable[[str, dict], None] | None = None
     deadline: float | None = None  # time.monotonic() 截止點，由 runner 依步驟 timeout 設定
+    limit_at: float | None = None  # 最長運行時間截止點（max_duration），到點拋 DurationReached
     failure_dir: Path | None = None  # None 停用失敗截圖
     # 由 runner 在每次嘗試前設定；適配器在失敗、關閉腳本程序「之前」呼叫 capture_failure() 保存現場
     failure_hook: Callable[[], None] | None = field(default=None, repr=False)
@@ -74,6 +79,8 @@ class RunContext:
         """在等待迴圈中呼叫：已取消或逾時就拋例外。"""
         if self.cancelled:
             raise Cancelled()
+        if self.limit_at is not None and time.monotonic() >= self.limit_at:
+            raise DurationReached()
         rem = self.remaining()
         if rem is not None and rem <= 0:
             raise StepTimeout()
@@ -83,6 +90,8 @@ class RunContext:
         rem = self.remaining()
         if rem is not None:
             seconds = max(0.0, min(seconds, rem))
+        if self.limit_at is not None:
+            seconds = max(0.0, min(seconds, self.limit_at - time.monotonic()))
         if self.cancel_event.wait(seconds):
             raise Cancelled()
         self.check()

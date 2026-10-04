@@ -374,3 +374,13 @@ def test_window_lost_relaunch_is_limited(fake, monkeypatch):
     with pytest.raises(AdapterError, match="失敗關鍵字"):
         OneDragonAdapter().run(ctx, {**params, "window_retries": 0})
     assert (root / "runs.txt").read_text() == "1"
+
+
+def test_max_duration_stops_onedragon(fake):
+    from gachahub.core.context import DurationReached
+    _, script, ctx, params, procs, _, _ = fake
+    script.write_text("import time; time.sleep(60)", encoding="utf-8")
+    ctx.limit_at = time.monotonic() + 0.6
+    with pytest.raises(DurationReached):
+        OneDragonAdapter().run(ctx, params)
+    assert all(p.poll() is not None for p in procs)

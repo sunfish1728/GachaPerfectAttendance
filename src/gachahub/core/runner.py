@@ -15,7 +15,7 @@ from typing import Any
 from ..hooks.base import Hook, create_hook
 from .adapter import AdapterError
 from . import compat
-from .context import Cancelled, RunContext, StepTimeout
+from .context import Cancelled, DurationReached, RunContext, StepTimeout
 from .models import ChainReport, FailPolicy, StepResult, StepStatus, TaskChain, TaskStep
 from .registry import AdapterRegistry
 from .snapshot import capture_screen
@@ -27,6 +27,16 @@ STATUS_TEXT = {
     StepStatus.CANCELLED: "已取消",
     StepStatus.SKIPPED: "已略過",
 }
+
+
+def format_duration(seconds: float) -> str:
+    if seconds < 60:
+        return f"{seconds:.0f} 秒"
+    minutes = round(seconds / 60)
+    hours, minutes = divmod(minutes, 60)
+    if hours and minutes:
+        return f"{hours} 小時 {minutes} 分鐘"
+    return f"{hours} 小時" if hours else f"{minutes} 分鐘"
 
 
 class ChainRunner:
@@ -130,9 +140,14 @@ class ChainRunner:
             ctx.log(f"警告：{compatibility.message}")
             ctx.emit("compat_warning", step=step.name, message=compatibility.message)
 
+        # 最長運行時間涵蓋整個步驟（含重試）
+        limit_at = time.monotonic() + step.max_duration if step.max_duration > 0 else None
+        # 設了最長運行時間時，逾時上限至少放寬到它之後，否則會先以逾時（失敗）收場
+        timeout = max(step.timeout, step.max_duration + 60) if limit_at is not None else step.timeout
         for attempt in range(1, max_attempts + 1):
             ctx.log(f"步驟「{step.name}」第 {attempt}/{max_attempts} 次")
-            ctx.deadline = time.monotonic() + step.timeout
+            ctx.deadline = time.monotonic() + timeout
+            ctx.limit_at = limit_at
             ctx.failure_hook = (
                 (lambda a=attempt: self._capture_failure(ctx, step.name, a)) if ctx.failure_dir is not None else None
             )
@@ -141,14 +156,17 @@ class ChainRunner:
                 status = StepStatus.SUCCESS
             except Cancelled:
                 status, message = StepStatus.CANCELLED, "使用者取消"
+            except DurationReached:
+                status, message = StepStatus.SUCCESS, f"已達最長運行時間 {format_duration(step.max_duration)}，已結束程序"
             except StepTimeout:
-                status, message = StepStatus.TIMEOUT, f"超過 {step.timeout:.0f} 秒"
+                status, message = StepStatus.TIMEOUT, f"超過 {timeout:.0f} 秒"
             except AdapterError as e:
                 status, message = StepStatus.FAILED, str(e)
             except Exception as e:
                 status, message = StepStatus.FAILED, f"未預期錯誤：{e!r}"
             finally:
                 ctx.deadline = None
+                ctx.limit_at = None
                 # 後備：適配器沒有在關閉程序前截圖時才在這裡補拍（capture_failure 每次嘗試只會生效一次）
                 if status in (StepStatus.FAILED, StepStatus.TIMEOUT):
                     ctx.capture_failure()
@@ -160,6 +178,8 @@ class ChainRunner:
             ctx.log(f"步驟「{step.name}」{STATUS_TEXT[status]}：{message}")
             if status in (StepStatus.SUCCESS, StepStatus.CANCELLED):
                 break
+            if limit_at is not None and time.monotonic() >= limit_at:
+                break  # 已用完最長運行時間，不再重試
             if attempt < max_attempts:
                 try:
                     ctx.sleep(self.retry_delay)
