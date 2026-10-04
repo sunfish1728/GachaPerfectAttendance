@@ -6,7 +6,7 @@ import logging
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QPointF, QRectF, Qt, Signal
+from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QLinearGradient, QPainter, QPainterPath, QPixmap
 from PySide6.QtWidgets import QApplication
 from qfluentwidgets import (
@@ -18,6 +18,8 @@ from qfluentwidgets import (
     NavigationItemPosition,
 )
 
+from . import theme
+from .brand import BrandWidget
 from .chain_page import ChainPage
 from .elevation import is_admin
 from .controller import AppController
@@ -48,11 +50,11 @@ def make_app_icon() -> QIcon:
         p = QPainter(pm)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         grad = QLinearGradient(0, 0, size, size)
-        grad.setColorAt(0, QColor("#9B7BFF"))
-        grad.setColorAt(1, QColor("#5B3FD9"))
+        grad.setColorAt(0, QColor("#CF5D34"))
+        grad.setColorAt(1, QColor("#A8401C"))
         p.setBrush(grad)
         p.setPen(Qt.PenStyle.NoPen)
-        r = size * 0.22
+        r = size * 0.08
         p.drawRoundedRect(QRectF(0, 0, size, size), r, r)
         tri = QPainterPath()
         s = size
@@ -71,7 +73,9 @@ class MainWindow(FluentWindow):
     hotkeyPressed = Signal()  # 由熱鍵執行緒 emit，自動排入主執行緒
 
     def __init__(self, controller: AppController):
+        theme.install()  # 必須在建立任何 Fluent 元件之前
         super().__init__()
+        theme.apply_window_background(self)
         self.controller = controller
         self._quitting = False
         self.instance_server = None  # 由 __main__ 設定
@@ -92,14 +96,26 @@ class MainWindow(FluentWindow):
         self.runPage = RunPage(controller, self)
         self.settingsPage = SettingsPage(controller, self)
 
+        nav = self.navigationInterface
+        nav.setExpandWidth(184)
+        nav.setCollapsible(False)
+        nav.setMenuButtonVisible(False)
+        nav.setReturnButtonVisible(False)
+        nav.panel.setIndicatorAnimationEnabled(False)
+        nav.addWidget("brand", BrandWidget(), None, NavigationItemPosition.TOP)
+        self._nav_header("工作台")
         self.addSubInterface(self.homePage, FIF.HOME, "首頁")
+        self.addSubInterface(self.runPage, FIF.COMMAND_PROMPT, "執行")
+        self._nav_header("編排")
         self.addSubInterface(self.chainPage, FIF.ROBOT, "任務鏈")
         self.addSubInterface(self.schedulePage, FIF.CALENDAR, "排程")
-        self.addSubInterface(self.runPage, FIF.COMMAND_PROMPT, "執行")
+        self._nav_header("紀錄")
         self.addSubInterface(self.historyPage, FIF.HISTORY, "歷史")
+        self._nav_header("系統", NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.notifyPage, FIF.RINGER, "通知", NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.settingsPage, FIF.SETTING, "設定", NavigationItemPosition.BOTTOM)
-        self.navigationInterface.setExpandWidth(180)
+
+        self._add_theme_button()
 
         self.homePage.runRequested.connect(self.run_chain)
         self.homePage.openChain.connect(self._open_chain)
@@ -143,6 +159,44 @@ class MainWindow(FluentWindow):
             QTimer.singleShot(5000, lambda: check_app_update(cfg.appRepo.value, self, silent=True))
 
         self._center()
+
+    def _nav_header(self, text: str, position=NavigationItemPosition.TOP) -> None:
+        header = self.navigationInterface.addItemHeader(text, position)
+        header.lightTextColor = theme.color("action", dark=False)
+        header.darkTextColor = theme.color("action", dark=True)
+        header.setFont(theme.ui_font(12, theme.QFont.Weight.Bold))
+
+    def paintEvent(self, e) -> None:
+        theme.paint_window(self)
+
+    def _add_theme_button(self) -> None:
+        """標題列右上角的淺色／深色切換按鈕。"""
+        from qfluentwidgets import TransparentToolButton, qconfig
+
+        bar = self.titleBar
+        self.themeButton = TransparentToolButton(bar)
+        self.themeButton.setFixedSize(46, 32)
+        self.themeButton.setIconSize(QSize(15, 15))
+        self.themeButton.clicked.connect(self.toggle_theme)
+        bar.buttonLayout.insertWidget(0, self.themeButton)
+        # 側欄頂端已有字標，標題列不再重複顯示圖示與標題
+        bar.iconLabel.hide()
+        bar.titleLabel.hide()
+        qconfig.themeChanged.connect(self._sync_theme_button)
+        self._sync_theme_button()
+
+    def _sync_theme_button(self, *_) -> None:
+        from qfluentwidgets import isDarkTheme
+
+        dark = isDarkTheme()
+        self.themeButton.setIcon(FIF.BRIGHTNESS if dark else FIF.QUIET_HOURS)
+        self.themeButton.setToolTip("切換為淺色" if dark else "切換為深色")
+        self.update()
+
+    def toggle_theme(self) -> None:
+        from qfluentwidgets import Theme, isDarkTheme, setTheme
+
+        setTheme(Theme.LIGHT if isDarkTheme() else Theme.DARK, save=True)
 
     # --- 動作 ---
 

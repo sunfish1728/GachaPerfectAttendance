@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 from qfluentwidgets import (
     BodyLabel,
     CaptionLabel,
@@ -17,18 +17,18 @@ from qfluentwidgets import (
 )
 
 from ..core.models import FailPolicy, StepStatus, TaskChain
+from . import theme
 
-# 狀態色：(淺色主題, 深色主題)
-STATUS_STYLE: dict[str, tuple[str, str, str]] = {
-    # key: (文字, 淺色, 深色)
-    "success": ("成功", "#0F7B0F", "#6CCB5F"),
-    "failed": ("失敗", "#C42B1C", "#FF99A4"),
-    "timeout": ("逾時", "#9D5D00", "#FCE100"),
-    "cancelled": ("已取消", "#5D5D5D", "#A0A0A0"),
-    "skipped": ("已略過", "#5D5D5D", "#A0A0A0"),
-    "running": ("執行中", "#005FB8", "#60CDFF"),
-    "pending": ("等待中", "#8A8A8A", "#7A7A7A"),
-    "idle": ("待命中", "#5D5D5D", "#A0A0A0"),
+# 狀態：(文字, 主題色票名稱)
+STATUS_STYLE: dict[str, tuple[str, str]] = {
+    "success": ("成功", "success"),
+    "failed": ("失敗", "error"),
+    "timeout": ("逾時", "warning"),
+    "cancelled": ("已取消", "muted"),
+    "skipped": ("已略過", "muted"),
+    "running": ("執行中", "running"),
+    "pending": ("等待中", "muted"),
+    "idle": ("待命中", "muted"),
 }
 
 POLICY_TEXT = {
@@ -41,7 +41,7 @@ POWER_TEXT = {"none": "無", "shutdown": "關機", "sleep": "睡眠", "hibernate
 
 
 class StatusBadge(QLabel):
-    """圓角膠囊狀態標籤，顏色隨主題切換。"""
+    """方角線框狀態標籤，顏色隨主題切換。"""
 
     def __init__(self, status: str = "idle", parent: QWidget | None = None):
         super().__init__(parent)
@@ -55,12 +55,44 @@ class StatusBadge(QLabel):
     def setStatus(self, status: str | StepStatus) -> None:
         status = status.value if isinstance(status, StepStatus) else status
         self._status = status
-        text, light, dark = STATUS_STYLE.get(status, STATUS_STYLE["idle"])
-        color = dark if isDarkTheme() else light
+        text, token = STATUS_STYLE.get(status, STATUS_STYLE["idle"])
+        c = theme.css(token)
         self.setText(text)
         self.setStyleSheet(
-            f"QLabel {{ color: {color}; border: 1px solid {color}; border-radius: 10px;"
-            f" padding: 0px 10px; font-size: 12px; background: transparent; }}"
+            f"QLabel {{ color: {c}; border: 1px solid {c}; border-left: 4px solid {c}; border-radius: 0px;"
+            f" padding: 0px 8px; font-size: 12px; background: transparent; }}"
+        )
+
+
+class NoticeBar(QFrame):
+    """扁平橫向提示：左側色條＋標題、可換行說明，右側操作按鈕。"""
+
+    def __init__(self, title: str, text: str, level: str = "warning", parent: QWidget | None = None):
+        super().__init__(parent)
+        self.level = level
+        h = QHBoxLayout(self)
+        h.setContentsMargins(16, 10, 12, 10)
+        h.setSpacing(14)
+        v = QVBoxLayout()
+        v.setSpacing(2)
+        self.title = StrongBodyLabel(title, self)
+        v.addWidget(self.title)
+        self.text = muted_caption(text, self)
+        self.text.setWordWrap(True)
+        v.addWidget(self.text)
+        h.addLayout(v, 1)
+        self.actions = QHBoxLayout()
+        h.addLayout(self.actions)
+        qconfig.themeChanged.connect(lambda *_: self._restyle())
+        self._restyle()
+
+    def addWidget(self, w: QWidget) -> None:
+        self.actions.addWidget(w)
+
+    def _restyle(self) -> None:
+        self.setStyleSheet(
+            f"NoticeBar {{ background: {theme.css('inset')}; border: 1px solid {theme.css('border_muted')};"
+            f" border-left: 4px solid {theme.css(self.level)}; border-radius: 0px; }}"
         )
 
 
@@ -96,7 +128,7 @@ class EmptyState(QWidget):
         t = StrongBodyLabel(title, self)
         v.addWidget(t, 0, Qt.AlignmentFlag.AlignHCenter)
         h = CaptionLabel(hint, self)
-        h.setTextColor("#606060", "#A0A0A0")
+        h.setTextColor(theme.color("muted", False), theme.color("muted", True))
         v.addWidget(h, 0, Qt.AlignmentFlag.AlignHCenter)
         if action:
             v.addSpacing(8)
@@ -107,7 +139,7 @@ class EmptyState(QWidget):
 
 def muted_caption(text: str, parent: QWidget | None = None) -> CaptionLabel:
     lbl = CaptionLabel(text, parent)
-    lbl.setTextColor("#606060", "#9A9A9A")
+    lbl.setTextColor(theme.color("muted", False), theme.color("muted", True))
     return lbl
 
 

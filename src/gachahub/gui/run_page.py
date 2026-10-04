@@ -71,7 +71,7 @@ class RunPage(QWidget):
         self.table.setEditTriggers(TableWidget.EditTrigger.NoEditTriggers)
         self.table.setSelectionMode(TableWidget.SelectionMode.NoSelection)
         self.table.setBorderVisible(True)
-        self.table.setBorderRadius(8)
+        self.table.setBorderRadius(0)
         hh = self.table.horizontalHeader()
         hh.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         hh.setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)

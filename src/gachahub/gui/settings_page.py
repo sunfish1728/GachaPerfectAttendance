@@ -7,7 +7,6 @@ from PySide6.QtWidgets import QVBoxLayout, QWidget
 from qfluentwidgets import (
     BoolValidator,
     ConfigItem,
-    CustomColorSettingCard,
     ExpandLayout,
     FluentIcon as FIF,
     OptionsSettingCard,
@@ -32,7 +31,7 @@ from qfluentwidgets import (
 
 from .. import __version__
 
-DEFAULT_ACCENT = "#7A5AF8"
+DEFAULT_ACCENT = "#C24D24"  # 介面重點色固定為鏽橘（見 gui/theme.py）
 
 
 class AppConfig(QConfig):
@@ -64,7 +63,9 @@ cfg.themeColor.value = DEFAULT_ACCENT
 def load_config(path) -> None:
     qconfig.load(str(path), cfg)
     setTheme(cfg.themeMode.value, lazy=True)
-    setThemeColor(cfg.themeColor.value, lazy=True)
+    from .theme import color
+
+    setThemeColor(color("action").name(), lazy=True)
 
 
 class HotkeyCard(SettingCard):
@@ -161,10 +162,7 @@ class SettingsPage(SmoothScrollArea):
             texts=["淺色", "深色", "跟隨系統"], parent=look,
         )
         self.themeCard.optionChanged.connect(lambda ci: setTheme(cfg.get(ci), save=False))
-        self.colorCard = CustomColorSettingCard(cfg.themeColor, FIF.PALETTE, "主題色", "按鈕與強調元素的顏色", look)
-        self.colorCard.colorChanged.connect(lambda c: setThemeColor(c))
         look.addSettingCard(self.themeCard)
-        look.addSettingCard(self.colorCard)
 
         behavior = SettingCardGroup("行為", host)
         behavior.addSettingCard(SwitchSettingCard(

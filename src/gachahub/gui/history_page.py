@@ -25,6 +25,7 @@ from qfluentwidgets import (
 )
 
 from .controller import AppController
+from . import theme
 from .widgets import STATUS_STYLE, SectionHeader, StatusBadge, fmt_duration, muted_caption
 
 WEEK = "一二三四五六日"
@@ -45,6 +46,7 @@ class StatTile(SimpleCardWidget):
         v.setSpacing(2)
         v.addWidget(muted_caption(label, self))
         self.value = TitleLabel("—", self)
+        self.value.setTextColor(theme.color("data", False), theme.color("data", True))
         v.addWidget(self.value)
 
     def set(self, text: str) -> None:
@@ -52,7 +54,7 @@ class StatTile(SimpleCardWidget):
 
 
 class WeekBoard(QWidget):
-    """完成看板：列 = 任務鏈，欄 = 近 7 天；圓點顏色表示當天最後一次結果，數字為次數。"""
+    """完成看板：列 = 任務鏈，欄 = 近 7 天；方塊顏色表示當天最後一次結果，數字為次數。"""
 
     ROW_H = 34
     NAME_W = 150
@@ -77,10 +79,9 @@ class WeekBoard(QWidget):
     def paintEvent(self, e) -> None:
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        dark = isDarkTheme()
-        text = QColor(255, 255, 255) if dark else QColor(0, 0, 0)
-        muted = QColor(160, 160, 160) if dark else QColor(110, 110, 110)
-        empty = QColor(255, 255, 255, 30) if dark else QColor(0, 0, 0, 22)
+        text = theme.color("text")
+        muted = theme.color("muted")
+        empty = theme.color("track")
         font = QFont(self.font())
         font.setPointSize(9)
         p.setFont(font)
@@ -106,19 +107,15 @@ class WeekBoard(QWidget):
                 cy = y + self.ROW_H / 2
                 cell = self.cells.get((chain, d))
                 if cell is None:
-                    p.setPen(Qt.PenStyle.NoPen)
-                    p.setBrush(empty)
-                    p.drawEllipse(QRectF(cx - 4, cy - 4, 8, 8))
+                    p.fillRect(QRectF(cx - 4, cy - 4, 8, 8), empty)
                     continue
                 status, runs, ok_runs = cell
-                _, light, darkc = STATUS_STYLE.get(status, STATUS_STYLE["idle"])
-                color = QColor(darkc if dark else light)
-                p.setPen(Qt.PenStyle.NoPen)
-                p.setBrush(color)
-                p.drawEllipse(QRectF(cx - 9, cy - 9, 18, 18))
+                _, token = STATUS_STYLE.get(status, STATUS_STYLE["idle"])
+                p.fillRect(QRectF(cx - 10, cy - 9, 20, 18), theme.color(token))
                 if runs > 1:
-                    p.setPen(QPen(QColor(255, 255, 255) if not dark else QColor(0, 0, 0)))
-                    p.drawText(QRectF(cx - 9, cy - 9, 18, 18), Qt.AlignmentFlag.AlignCenter, str(runs))
+                    p.setPen(QPen(theme.color("canvas")))
+                    p.drawText(QRectF(cx - 10, cy - 9, 20, 18), Qt.AlignmentFlag.AlignCenter, str(runs))
+            p.fillRect(QRectF(0, y + self.ROW_H - 1, self.width(), 1), theme.color("line"))
 
 
 class RunDetailDialog(MessageBoxBase):
@@ -134,7 +131,7 @@ class RunDetailDialog(MessageBoxBase):
         table.verticalHeader().setDefaultSectionSize(40)
         table.setEditTriggers(TableWidget.EditTrigger.NoEditTriggers)
         table.setBorderVisible(True)
-        table.setBorderRadius(8)
+        table.setBorderRadius(0)
         steps = controller.history.steps(run.id)
         table.setRowCount(len(steps))
         for r, s in enumerate(steps):
@@ -202,7 +199,7 @@ class HistoryPage(SmoothScrollArea):
         legend.setSpacing(16)
         for key in ("success", "failed", "cancelled"):
             legend.addWidget(StatusBadge(key, boardCard))
-        legend.addWidget(muted_caption("圓點為當天最後一次結果；數字為當天執行次數", boardCard))
+        legend.addWidget(muted_caption("方塊為當天最後一次結果；數字為當天執行次數", boardCard))
         legend.addStretch(1)
         bl.addLayout(legend)
         v.addWidget(boardCard)
@@ -221,7 +218,7 @@ class HistoryPage(SmoothScrollArea):
         self.table.setEditTriggers(TableWidget.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(TableWidget.SelectionBehavior.SelectRows)
         self.table.setBorderVisible(True)
-        self.table.setBorderRadius(8)
+        self.table.setBorderRadius(0)
         hh = self.table.horizontalHeader()
         for c in (0, 1, 2, 4):
             hh.setSectionResizeMode(c, QHeaderView.ResizeMode.ResizeToContents)

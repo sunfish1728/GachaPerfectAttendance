@@ -28,9 +28,12 @@ from qfluentwidgets import (
 )
 
 from ..core.models import ChainReport, StepStatus, TaskChain
+from .. import __version__
+from . import theme
+from .brand import ConsoleStrip
 from .controller import AppController
 from .elevation import is_admin
-from .widgets import EmptyState, SectionHeader, StatusBadge, chain_summary, fmt_duration, muted_caption
+from .widgets import EmptyState, NoticeBar, SectionHeader, StatusBadge, chain_summary, fmt_duration, muted_caption
 
 WEEKDAYS = "一二三四五六日"
 
@@ -89,7 +92,7 @@ class ChainCard(ElevatedCardWidget):
 
 
 class IconTile(QFrame):
-    """主題色淡底的圓角圖示方塊。"""
+    """重點色淡底、細框的方形圖示格。"""
 
     def __init__(self, icon, size: int = 52, parent=None):
         super().__init__(parent)
@@ -107,10 +110,10 @@ class IconTile(QFrame):
         self.icon.setIcon(icon)
 
     def _restyle(self) -> None:
-        c = themeColor()
+        c = theme.color("action")
         self.setStyleSheet(
-            f"IconTile {{ background: rgba({c.red()},{c.green()},{c.blue()},{40 if isDarkTheme() else 28});"
-            f" border-radius: 12px; }}"
+            f"IconTile {{ background: rgba({c.red()},{c.green()},{c.blue()},{46 if isDarkTheme() else 30});"
+            f" border: 1px solid {theme.css('border_muted')}; border-radius: 0px; }}"
         )
 
 
@@ -122,9 +125,10 @@ class StatusCard(CardWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedHeight(104)
+        self.setProperty("rail", True)  # 左側粗條＋鉚點（見 theme._card_paint）
+        self.setFixedHeight(108)
         h = QHBoxLayout(self)
-        h.setContentsMargins(20, 16, 20, 16)
+        h.setContentsMargins(28, 16, 22, 18)
         h.setSpacing(16)
         self.tile = IconTile(FIF.GAME, parent=self)
         h.addWidget(self.tile)
@@ -204,16 +208,17 @@ class HomePage(SmoothScrollArea):
         self.v.setSpacing(8)
         self.setWidget(body)
 
+        self.v.addWidget(ConsoleStrip(["GACHA", "CONSOLE", f"V{__version__}"], body))
+        self.v.addSpacing(10)
         self.hello = TitleLabel("", body)
         self.v.addWidget(self.hello)
         self.date = muted_caption("", body)
         self.v.addWidget(self.date)
         self.v.addSpacing(12)
 
-        self.adminBar = InfoBar(
-            InfoBarIcon.WARNING, "未以系統管理員身分執行",
-            "有任務鏈使用需要管理員權限的腳本，執行時會跳出 UAC 提示，且無法自動停止。",
-            orient=Qt.Orientation.Horizontal, isClosable=False, duration=-1, parent=body,
+        self.adminBar = NoticeBar(
+            "未以系統管理員身分執行",
+            "有任務鏈使用需要管理員權限的腳本，執行時會跳出 UAC 提示，且無法自動停止。", "warning", body,
         )
         elevate = PushButton("以管理員身分重新啟動", self.adminBar)
         elevate.clicked.connect(self.elevateRequested)

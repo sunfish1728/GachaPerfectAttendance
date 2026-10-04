@@ -40,6 +40,9 @@ def main() -> int:
     from .gui.i18n import install_translator
 
     install_translator(app)
+    from .gui import theme
+
+    theme.install()
 
     # 單一實例：已有實例在跑就請它顯示視窗，然後自己結束
     sock = QLocalSocket()

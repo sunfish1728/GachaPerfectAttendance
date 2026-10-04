@@ -9,7 +9,7 @@ import math
 import time
 
 from PySide6.QtCore import QPoint, QRectF, Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QPainter, QPainterPath
+from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import QApplication, QGraphicsDropShadowEffect, QHBoxLayout, QVBoxLayout, QWidget
 from qfluentwidgets import (
     FluentIcon as FIF,
@@ -18,9 +18,9 @@ from qfluentwidgets import (
     PushButton,
     StrongBodyLabel,
     TransparentPushButton,
-    isDarkTheme,
 )
 
+from . import theme
 from .home_page import IconTile
 from .scheduler_service import PendingRun
 from .widgets import muted_caption
@@ -29,17 +29,16 @@ WIDTH = 380
 
 
 class _Card(QWidget):
-    """圓角卡片背景（隨主題）。"""
+    """控制台面板背景：顆粒底、方角線框、左側粗條（隨主題）。"""
 
     def paintEvent(self, e) -> None:
         p = QPainter(self)
-        p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        path = QPainterPath()
-        path.addRoundedRect(QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5), 10, 10)
-        dark = isDarkTheme()
-        p.fillPath(path, QColor(43, 43, 43) if dark else QColor(252, 252, 252))
-        p.setPen(QColor(255, 255, 255, 24) if dark else QColor(0, 0, 0, 22))
-        p.drawPath(path)
+        r = self.rect().adjusted(0, 0, -1, -1)
+        p.fillRect(r, theme.color("canvas"))
+        theme.paint_grain(p, r)
+        p.setPen(theme.color("border"))
+        p.drawRect(r)
+        p.fillRect(QRectF(0, 0, 9, self.height()), theme.color("border"))
 
 
 class CountdownToast(QWidget):
@@ -61,14 +60,14 @@ class CountdownToast(QWidget):
         outer.setContentsMargins(16, 16, 16, 16)
         card = _Card(self)
         shadow = QGraphicsDropShadowEffect(card)
-        shadow.setBlurRadius(28)
-        shadow.setOffset(0, 6)
-        shadow.setColor(QColor(0, 0, 0, 70))
+        shadow.setBlurRadius(18)
+        shadow.setOffset(3, 4)
+        shadow.setColor(QColor(0, 0, 0, 60))
         card.setGraphicsEffect(shadow)
         outer.addWidget(card)
 
         v = QVBoxLayout(card)
-        v.setContentsMargins(18, 16, 18, 14)
+        v.setContentsMargins(26, 16, 18, 14)
         v.setSpacing(10)
         top = QHBoxLayout()
         top.setSpacing(12)
