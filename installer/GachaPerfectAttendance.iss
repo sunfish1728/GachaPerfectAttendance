@@ -38,6 +38,8 @@ WizardStyle=modern
 Compression=lzma2
 SolidCompression=yes
 CloseApplications=no
+; Inno 預設的 RedirectionGuard 會傳給子程序，導致 uv 安裝 Python 時無法建立目錄連結（os error 448）
+RedirectionGuard=no
 VersionInfoVersion={#AppVer}
 VersionInfoProductName={#AppName}
 VersionInfoDescription={#AppName} 安裝程式
@@ -147,16 +149,26 @@ begin
     '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
+function WakeTaskFilter(): string;
+begin
+  { 只處理工作資料夾就是這個安裝位置的喚醒工作，不動其他安裝（例如開發版）建立的 }
+  Result := 'Get-ScheduledTask -TaskPath ''\GachaHub\'' -ErrorAction SilentlyContinue | Where-Object { $_.Actions[0].WorkingDirectory -eq ''' +
+            ExpandConstant('{app}') + ''' }';
+end;
+
 procedure RemoveWakeTasks();
 var
   ResultCode: Integer;
+  PS: string;
 begin
-  { 喚醒電腦用的排程工作由程式以系統管理員身分建立，刪除時也需要提權 }
-  if Exec(ExpandConstant('{sys}\schtasks.exe'), '/Query /TN "\GachaHub\"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode)
-     and (ResultCode = 0) then
-    if MsgBox('要一併移除「喚醒電腦」用的 Windows 排程工作嗎？（需要系統管理員權限）', mbConfirmation, MB_YESNO) = IDYES then
-      ShellExec('runas', ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
-        '-NoProfile -Command "Get-ScheduledTask -TaskPath ''\GachaHub\'' | Unregister-ScheduledTask -Confirm:$false"',
+  if UninstallSilent() then
+    Exit;
+  PS := ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe');
+  { 有符合的工作時結束碼為 0 }
+  if Exec(PS, '-NoProfile -Command "if (@(' + WakeTaskFilter() + ').Count -gt 0) { exit 0 } else { exit 1 }"',
+          '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
+    if MsgBox('要一併移除這個安裝建立的「喚醒電腦」Windows 排程工作嗎？（需要系統管理員權限）', mbConfirmation, MB_YESNO) = IDYES then
+      ShellExec('runas', PS, '-NoProfile -Command "' + WakeTaskFilter() + ' | Unregister-ScheduledTask -Confirm:$false"',
         '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
@@ -197,7 +209,7 @@ begin
   if CurUninstallStep = usPostUninstall then
   begin
     KeepData := True;
-    if DirExists(ExpandConstant('{app}\data')) then
+    if DirExists(ExpandConstant('{app}\data')) and not UninstallSilent() then
       KeepData := MsgBox('要保留設定、任務鏈與執行紀錄（data 資料夾）嗎？' + #13#10 +
                          '保留的話，之後重新安裝可以直接沿用。', mbConfirmation, MB_YESNO) = IDYES;
     DeleteAppFiles(KeepData);

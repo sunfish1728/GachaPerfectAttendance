@@ -31,7 +31,7 @@ from qfluentwidgets import (
 
 from .. import __version__
 
-DEFAULT_ACCENT = "#C24D24"  # 介面重點色固定為鏽橘（見 gui/theme.py）
+DEFAULT_ACCENT = "#B5552B"  # 介面重點色固定為鏽橘（見 gui/theme.py）
 
 
 class AppConfig(QConfig):

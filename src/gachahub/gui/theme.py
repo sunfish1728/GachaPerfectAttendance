@@ -19,58 +19,54 @@ from PySide6.QtWidgets import QWidget
 # ---------------------------------------------------------------- 色票
 
 LIGHT = {
-    "canvas": "#F3E6D4",
-    "inset": "#EADCC9",
-    "track": "#E3D0B6",
-    "text": "#0A4550",
-    "muted": "#4F7173",
-    "border": "#0A4550",
-    "border_muted": "#6F8F8C",
-    "line": (10, 69, 80, 60),
-    "action": "#C24D24",
-    "action_hover": "#CF5D34",
-    "action_press": "#A8401C",
-    "data": "#C24D24",
-    "on_action": "#F7EEE1",
-    "chart2": "#C99A3E",
-    "hover": (10, 69, 80, 18),
-    "press": (10, 69, 80, 34),
-    "disabled": (10, 69, 80, 95),
-    "shadow": (40, 48, 40, 34),
-    "success": "#1E8A45",
-    "error": "#B3261E",
-    "running": "#0B6E99",
-    "warning": "#A8741A",
+    "canvas": "#F2EBE1",
+    "inset": "#E8DFD2",
+    "track": "#DDD2C2",
+    "text": "#1F4351",
+    "muted": "#5B7480",
+    "border": "#1F4351",
+    "border_muted": "#8197A0",
+    "line": (31, 67, 81, 55),
+    "action": "#B5552B",
+    "action_hover": "#C26437",
+    "action_press": "#994520",
+    "data": "#B5552B",
+    "on_action": "#FBF5EC",
+    "chart2": "#B8913F",
+    "hover": (31, 67, 81, 16),
+    "press": (31, 67, 81, 32),
+    "disabled": (31, 67, 81, 95),
+    "shadow": (40, 44, 48, 30),
+    "success": "#2B8A4E",
+    "error": "#B3302A",
+    "running": "#1F6F94",
+    "warning": "#A47722",
 }
 
 DARK = {
-    "canvas": "#1F1715",
-    "inset": "#261E1B",
-    "track": "#312A25",
-    "text": "#D2C0A9",
-    "muted": "#9A8B7A",
-    "border": "#D2C0A9",
-    "border_muted": "#675B4D",
-    "line": (210, 192, 169, 50),
-    "action": "#C04D27",
-    "action_hover": "#CF5B33",
-    "action_press": "#A6401F",
-    "data": "#C0714A",
-    "on_action": "#110906",
-    "chart2": "#6B7A5C",
-    "hover": (210, 192, 169, 16),
-    "press": (210, 192, 169, 30),
-    "disabled": (210, 192, 169, 90),
+    "canvas": "#1C1A18",
+    "inset": "#242120",
+    "track": "#302C29",
+    "text": "#DCCDBA",
+    "muted": "#9D9284",
+    "border": "#DCCDBA",
+    "border_muted": "#5E564E",
+    "line": (220, 205, 186, 46),
+    "action": "#C2602F",
+    "action_hover": "#CF6E3C",
+    "action_press": "#A54F22",
+    "data": "#CB7E54",
+    "on_action": "#160D08",
+    "chart2": "#7D8C69",
+    "hover": (220, 205, 186, 16),
+    "press": (220, 205, 186, 30),
+    "disabled": (220, 205, 186, 90),
     "shadow": (0, 0, 0, 0),
-    "success": "#22C55E",
-    "error": "#FF5A5F",
-    "running": "#38BDF8",
-    "warning": "#C99A3E",
+    "success": "#34C46A",
+    "error": "#F2605E",
+    "running": "#4AB3E6",
+    "warning": "#CFA048",
 }
-
-# 品牌階梯色塊（小面積裝飾用）
-BRAND_STEPS = ("#A94836", "#C8753D", "#C5A84B", "#668F6B", "#4F858E", "#6F638C")
-
 
 def _dark() -> bool:
     from qfluentwidgets import isDarkTheme
@@ -364,7 +360,7 @@ StateToolTip { border-radius: 0px; }
 }
 
 _EXTRA = {
-    "mask": ((243, 230, 212, 150), (15, 10, 8, 150)),
+    "mask": ((242, 235, 225, 150), (14, 12, 11, 150)),
 }
 
 

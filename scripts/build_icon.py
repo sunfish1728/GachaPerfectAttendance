@@ -12,7 +12,7 @@ from PySide6.QtGui import QColor, QGuiApplication, QImage, QPainter, QPainterPat
 
 ROOT = Path(__file__).resolve().parents[1]
 SIZES = (16, 20, 24, 32, 40, 48, 64, 128, 256)
-FRAME = QColor("#0A4550")  # 介面淺色主題的結構色（深青綠）
+FRAME = QColor("#1F4351")  # 介面淺色主題的結構色（深青綠）
 
 
 def render(src: QImage, size: int) -> QImage:

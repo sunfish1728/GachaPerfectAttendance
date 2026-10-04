@@ -1,4 +1,4 @@
-"""品牌裝飾：側欄頂端字標＋階梯色塊、首頁頂端的控制台標記列。"""
+"""品牌裝飾：側欄頂端字標、首頁頂端的標記列。"""
 
 from __future__ import annotations
 
@@ -12,19 +12,10 @@ from . import theme
 APP_NAME = "二遊全勤君"
 
 
-def paint_steps(p: QPainter, x: float, bottom: float, width: float, low: float, high: float) -> None:
-    """六段硬邊實色、由左往右逐段升高的階梯色塊。"""
-    n = len(theme.BRAND_STEPS)
-    w = width / n
-    for i, c in enumerate(theme.BRAND_STEPS):
-        h = low + (high - low) * i / (n - 1)
-        p.fillRect(QRectF(x + i * w, bottom - h, w + 0.5, h), QColor(c))
-
-
 class BrandWidget(NavigationWidget):
-    """側欄頂端：鏽橘字標、階梯色塊與分隔線。"""
+    """側欄頂端：重點色字標、英文副標與分隔線。"""
 
-    HEIGHT = 70
+    HEIGHT = 64
 
     def __init__(self, parent=None):
         super().__init__(isSelectable=False, parent=parent)
@@ -54,7 +45,7 @@ class BrandWidget(NavigationWidget):
         p.setRenderHint(QPainter.RenderHint.TextAntialiasing)
         w = self.width()
         if self.isCompacted:
-            paint_steps(p, 6, self.HEIGHT - 14, w - 12, 3, 12)
+            p.fillRect(QRectF(10, self.HEIGHT - 14, w - 20, 3), theme.color("action"))
         else:
             p.setFont(theme.ui_font(20, QFont.Weight.Bold))
             p.setPen(theme.color("action"))
@@ -64,8 +55,7 @@ class BrandWidget(NavigationWidget):
             p.setFont(f)
             p.setPen(theme.color("muted"))
             p.drawText(QRectF(13, 34, w - 12, 12), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
-                       "GACHA PERFECT ATTENDANCE")
-            paint_steps(p, 12, self.HEIGHT - 9, min(132, w - 24), 3, 10)
+                       "PERFECT ATTENDANCE")
         p.fillRect(QRectF(0, self.HEIGHT - 1, w, 1), theme.color("border_muted"))
 
 
