@@ -14,7 +14,7 @@ from typing import Any
 
 from ..hooks.base import Hook, create_hook
 from .adapter import AdapterError
-from . import compat
+from . import compat, process
 from .context import Cancelled, DurationReached, RunContext, StepTimeout
 from .models import ChainReport, FailPolicy, StepResult, StepStatus, TaskChain, TaskStep
 from .registry import AdapterRegistry
@@ -151,12 +151,14 @@ class ChainRunner:
             ctx.failure_hook = (
                 (lambda a=attempt: self._capture_failure(ctx, step.name, a)) if ctx.failure_dir is not None else None
             )
+            reached = False
             try:
                 message = adapter.run(ctx, step.params)
                 status = StepStatus.SUCCESS
             except Cancelled:
                 status, message = StepStatus.CANCELLED, "使用者取消"
             except DurationReached:
+                reached = True
                 status, message = StepStatus.SUCCESS, f"已達最長運行時間 {format_duration(step.max_duration)}，已結束程序"
             except StepTimeout:
                 status, message = StepStatus.TIMEOUT, f"超過 {timeout:.0f} 秒"
@@ -175,6 +177,9 @@ class ChainRunner:
                     adapter.cleanup(ctx, step.params)
                 except Exception as e:
                     ctx.log(f"清理失敗：{e}")
+                # 腳本被中止（取消、逾時、失敗、到達最長運行時間）時連遊戲本體一起關閉
+                if reached or status != StepStatus.SUCCESS:
+                    self._kill_game(ctx, adapter, step.params)
             ctx.log(f"步驟「{step.name}」{STATUS_TEXT[status]}：{message}")
             if status in (StepStatus.SUCCESS, StepStatus.CANCELLED):
                 break
@@ -188,6 +193,21 @@ class ChainRunner:
                     break
         return StepResult(step=step.name, status=status, message=message, attempts=attempt,
                           started_at=started, finished_at=datetime.now())
+
+    @staticmethod
+    def _kill_game(ctx: RunContext, adapter, params: dict) -> None:
+        try:
+            names = list(adapter.merged(params).get("game_processes") or [])
+        except Exception:
+            return
+        for name in names:
+            try:
+                n = process.kill_by_name(name)
+            except Exception as e:
+                ctx.log(f"無法關閉遊戲 {name}：{e}")
+                continue
+            if n:
+                ctx.log(f"已關閉遊戲 {name}（{n} 個程序）")
 
     @staticmethod
     def _capture_failure(ctx: RunContext, name: str, attempt: int) -> None:

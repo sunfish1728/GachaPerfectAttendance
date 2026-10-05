@@ -320,7 +320,7 @@ def test_registry_yaml_and_validation(installation):
     adapter = registry.create("ok-nte")
     assert isinstance(adapter, OkScriptAdapter)
     assert adapter.requires_admin
-    assert adapter.defaults == {"exe": "ok-nte.exe"}
+    assert adapter.defaults == {"exe": "ok-nte.exe", "game_processes": ["HTGame.exe"]}
     for p in ({}, {"install_dir": str(installation)}, params(installation, startup_grace="nan")):
         with pytest.raises(AdapterError):
             adapter.validate(p)

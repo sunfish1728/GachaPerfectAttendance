@@ -165,7 +165,7 @@ class StepDialog(MessageBoxBase):
         dr.addWidget(self.durationCheck)
         dr.addWidget(self.durationBox, 1)
         form.addRow("最長運行", dur)
-        durHint = muted_caption("時間到直接結束腳本程序並視為完成，接著跑下一步；預設不啟用。"
+        durHint = muted_caption("時間到直接結束腳本與遊戲程序並視為完成，接著跑下一步；預設不啟用。"
                                 "逾時則代表卡住，算失敗（逾時上限會自動放寬到最長運行時間之後）。", self)
         durHint.setWordWrap(True)
         form.addRow("", durHint)

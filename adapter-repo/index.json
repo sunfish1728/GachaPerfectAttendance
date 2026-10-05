@@ -5,18 +5,18 @@
     {
       "id": "ok-nte",
       "name": "ok 異環",
-      "version": 1,
+      "version": 2,
       "file": "ok-nte.yaml",
-      "sha256": "6d4a55fb82ff89e2a82012c550d9c86eea323b7cb9a3997f610086f8bd3acd7a",
+      "sha256": "d9466d33ecdee1cdfccba6ec3af7e23437cac3e750c83c566c2131f06616bc9f",
       "min_app": "",
       "note": "已驗證 v1.4.6"
     },
     {
       "id": "zzz-onedragon",
       "name": "絕區零一條龍",
-      "version": 2,
+      "version": 3,
       "file": "zzz-onedragon.yaml",
-      "sha256": "fb8a61f5caa325d937fa7a02bfdb25ccac0abfd5b34f2ccaa8470a9651ffc326",
+      "sha256": "648936cdc8c86a10a5d7319cb6d01966030e81a851b4109a45bd8f7152e1c49d",
       "min_app": "",
       "note": "已驗證 2.0.0"
     }

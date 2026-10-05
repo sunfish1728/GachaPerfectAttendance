@@ -1,7 +1,7 @@
 id: ok-nte
 name: ok 異環
 base: ok
-version: 1
+version: 2
 compat:
   min: "v1.4.0"
   max: "v1.4"
@@ -9,6 +9,8 @@ compat:
   note: 已驗證 v1.4.6
 defaults:
   exe: ok-nte.exe
+  # 腳本被中止時一併關閉的遊戲程序
+  game_processes: [HTGame.exe]
 fields:
   - key: stall_minutes
     label: 日誌卡死分鐘數

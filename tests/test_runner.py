@@ -212,3 +212,36 @@ def test_format_duration():
     assert format_duration(90 * 60) == "1 小時 30 分鐘"
     assert format_duration(120 * 60) == "2 小時"
     assert format_duration(45 * 60) == "45 分鐘"
+
+
+def _game_kills(monkeypatch):
+    killed = []
+    monkeypatch.setattr("gachahub.core.process.kill_by_name", lambda name, timeout=5.0: killed.append(name) or 1)
+    return killed
+
+
+def test_game_killed_when_step_stopped(runner, ctx, monkeypatch):
+    killed = _game_kills(monkeypatch)
+    rep = runner.run(TaskChain(name="t", steps=[
+        py_step("dur", "import time; time.sleep(60)", max_duration=0.5),
+        py_step("bad", "raise SystemExit(2)"),
+    ]), ctx)
+    # generic 適配器的步驟參數也可帶 game_processes；兩個步驟都沒帶 → 不關任何遊戲
+    assert killed == []
+    rep = runner.run(TaskChain(name="t", steps=[
+        TaskStep(name="dur", adapter="generic", max_duration=0.5, params={
+            "command": PY, "args": ["-c", "import time; time.sleep(60)"], "hide_window": True,
+            "game_processes": ["Game.exe"]}),
+        TaskStep(name="bad", adapter="generic", params={
+            "command": PY, "args": ["-c", "raise SystemExit(2)"], "hide_window": True,
+            "game_processes": ["Other.exe"]}),
+    ]), ctx)
+    assert [r.status for r in rep.results] == [StepStatus.SUCCESS, StepStatus.FAILED]
+    assert killed == ["Game.exe", "Other.exe"]
+
+
+def test_game_kept_on_normal_success(runner, ctx, monkeypatch):
+    killed = _game_kills(monkeypatch)
+    rep = runner.run(TaskChain(name="t", steps=[TaskStep(name="ok", adapter="generic", params={
+        "command": PY, "args": ["-c", "pass"], "hide_window": True, "game_processes": ["Game.exe"]})]), ctx)
+    assert rep.results[0].status == StepStatus.SUCCESS and killed == []
